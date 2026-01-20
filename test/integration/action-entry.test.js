@@ -72,7 +72,7 @@ describe('Action entrypoint', () => {
     const outputDir = path.join(tempDir, 'out');
 
     try {
-      setActionInput('output_dir', outputDir);
+      setActionInput('public_dir', outputDir);
       setActionInput('security_contact', 'mailto:test@example.com');
       setActionInput('security_expires', '2026-12-31T23:59:59Z');
       setActionInput('security_comments', 'false');
@@ -119,7 +119,7 @@ describe('Action entrypoint', () => {
     };
 
     try {
-      setActionInput('output_dir', outputDir);
+      setActionInput('public_dir', outputDir);
       setActionInput('security_contact', 'mailto:log@example.com');
       setActionInput('security_expires', '2026-12-31T23:59:59Z');
       setActionInput('security_comments', 'false');
@@ -159,7 +159,7 @@ describe('Action entrypoint', () => {
     const outputDir = path.join(tempDir, 'with-comments');
 
     try {
-      setActionInput('output_dir', outputDir);
+      setActionInput('public_dir', outputDir);
       setActionInput('site_url', 'https://example.com');
       setActionInput('security_contact', 'contact@example.com');
       setActionInput('security_expires', '2026-12-31T23:59:59Z');
@@ -213,7 +213,7 @@ describe('Action entrypoint', () => {
     };
 
     try {
-      setActionInput('output_dir', outputDir);
+      setActionInput('public_dir', outputDir);
       setActionInput('security_contact', 'mailto:upload@example.com');
       setActionInput('security_expires', '2026-12-31T23:59:59Z');
       setActionInput('artifact_name', 'securitytxt');

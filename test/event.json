@@ -5,7 +5,7 @@
     "security_policy": "https://example.com/security",
     "security_acknowledgments": "https://example.com/hall-of-fame",
     "security_comments": "true",
-    "output_dir": ".well-known",
+    "public_dir": ".well-known",
     "upload_artifacts": "true",
     "artifact_name": "securitytxt",
     "artifact_retention_days": "30"

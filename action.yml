@@ -11,7 +11,7 @@ runs:
   using: 'node20'
   main: 'dist/index.js'
 inputs:
-  output_dir:
+  public_dir:
     description: 'Directory to write security.txt (defaults to current directory). File will be placed in .well-known/ subdirectory per RFC 9116.'
     required: false
     default: '.'

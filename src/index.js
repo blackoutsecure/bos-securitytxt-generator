@@ -97,7 +97,7 @@ async function run() {
     printHeader(core);
 
     // Read inputs
-    const outputDir = core.getInput('output_dir') || '.';
+    const outputDir = core.getInput('public_dir') || '.';
     const siteUrl = core.getInput('site_url');
     const securityContact = core.getInput('security_contact');
     const securityExpires = core.getInput('security_expires');

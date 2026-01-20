@@ -46,7 +46,7 @@ function setupActionEnvironment(eventJsonPath) {
     setActionInput('security_contact', 'security@example.com');
   if (!inputs.security_expires)
     setActionInput('security_expires', '2026-12-31T23:59:59Z');
-  if (!inputs.output_dir) setActionInput('output_dir', '.well-known');
+  if (!inputs.public_dir) setActionInput('public_dir', '.well-known');
   if (!inputs.upload_artifacts) setActionInput('upload_artifacts', 'true');
   if (!inputs.artifact_name) setActionInput('artifact_name', 'securitytxt');
   if (!inputs.artifact_retention_days)

@@ -35,7 +35,7 @@ jobs:
       - name: Generate security.txt
         uses: blackoutsecure/bos-securitytxt-generator@v1
         with:
-          output_dir: 'public'
+          public_dir: 'public'
           site_url: 'https://example.com'
           security_contact: 'mailto:security@example.com'
           security_expires: '2026-12-31T23:59:59Z'
@@ -54,7 +54,7 @@ See [action.yml](action.yml) for all available inputs.
 ### Optional Inputs
 
 - **`site_url`** - Your website URL (e.g., `https://example.com`)
-- **`output_dir`** - Directory to write security.txt (default: current directory)
+- **`public_dir`** - Directory to write security.txt (default: current directory)
 - **`security_policy`** - Link to vulnerability disclosure policy
 - **`security_acknowledgments`** - Link to security researchers hall of fame
 - **`security_encryption`** - OpenPGP encryption key URL
@@ -69,7 +69,7 @@ See [action.yml](action.yml) for all available inputs.
 Security.txt is automatically generated at:
 
 ```
-<output_dir>/.well-known/security.txt
+<public_dir>/.well-known/security.txt
 ```
 
 Per RFC 9116, the file **must** be served at `/.well-known/security.txt` over HTTPS.
@@ -84,7 +84,7 @@ Per RFC 9116, the file **must** be served at `/.well-known/security.txt` over HT
 - name: Generate security.txt
   uses: blackoutsecure/bos-securitytxt-generator@v1
   with:
-    output_dir: 'public'
+    public_dir: 'public'
     site_url: 'https://example.com'
     security_contact: 'mailto:security@example.com,https://example.com/report'
     security_expires: '2026-12-31T23:59:59Z'
