@@ -1,11 +1,11 @@
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Blackout Secure Security TXT Generator GitHub Action
-# Copyright © 2025 Blackout Secure
+# Copyright © 2025-2026 Blackout Secure
 # Licensed under Apache License 2.0
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 name: 'Blackout Secure Security TXT Generator'
-description: 'Blackout Secure Security TXT Generator - Automated security.txt generation per RFC 9116 for vulnerability disclosure'
+description: 'Generate RFC 9116-compliant security.txt for responsible vulnerability disclosure. Automated deployment with GitHub Actions.'
 author: 'Blackout Secure'
 runs:
   using: 'node20'

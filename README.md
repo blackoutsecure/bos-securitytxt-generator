@@ -1,12 +1,18 @@
 # Blackout Secure Security TXT Generator
 
-**Copyright © 2025 Blackout Secure | Apache License 2.0**
-
-[![Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-blue?logo=github)](https://github.com/marketplace/actions/robots-txt-generator)
+[![Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-blue?logo=github)](https://github.com/marketplace/actions/bos-securitytxt-generator)
 [![GitHub release](https://img.shields.io/github/v/release/blackoutsecure/bos-securitytxt-generator?sort=semver)](https://github.com/blackoutsecure/bos-securitytxt-generator/releases)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-Automated **security.txt** generation per [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116) for vulnerability disclosure and responsible security practices.
+Generate RFC 9116-compliant security.txt for responsible vulnerability disclosure. Automated deployment with GitHub Actions.
+
+## Features
+
+✅ **RFC 9116 Compliant** - Follows official security.txt standard  
+✅ **Auto-Generated** - Creates properly formatted files from simple inputs  
+✅ **Flexible Configuration** - Support for all RFC 9116 fields  
+✅ **Zero Dependencies** - Runs in GitHub Actions with Node.js 20  
+✅ **Artifact Upload** - Optional automatic artifact storage
 
 ## Quick Start
 
@@ -100,45 +106,28 @@ Per RFC 9116, the file **must** be served at `/.well-known/security.txt` over HT
 
 ## RFC 9116 Compliance
 
-This action generates security.txt files fully compliant with [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116) including:
+Fully compliant with [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116):
 
-- ✅ Machine-parsable format with strict syntax
 - ✅ Required fields: `Contact`, `Expires`
 - ✅ Optional fields: `Acknowledgments`, `Canonical`, `Encryption`, `Hiring`, `Policy`, `Preferred-Languages`
-- ✅ Proper encoding (UTF-8)
-- ✅ Served at `/.well-known/security.txt` over HTTPS
-- ✅ Optional RFC reference comments
-
-## Local Development
-
-```bash
-npm install
-npm run build
-npm test
-npm run coverage
-```
-
-### Scripts
-
-| Command              | Purpose                  |
-| -------------------- | ------------------------ |
-| `npm run build`      | Build action bundle      |
-| `npm test`           | Run tests                |
-| `npm run test:watch` | Watch mode               |
-| `npm run coverage`   | Generate coverage report |
-| `npm run lint`       | Lint code                |
-| `npm run format`     | Format files             |
+- ✅ Proper UTF-8 encoding and machine-parsable format
+- ✅ Serves at `/.well-known/security.txt` over HTTPS
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `npm test`
-5. Submit a pull request
+## Support
+
+- 📚 [Documentation](https://github.com/blackoutsecure/bos-securitytxt-generator#readme)
+- 🐛 [Report Issues](https://github.com/blackoutsecure/bos-securitytxt-generator/issues)
+- 🔒 [Security Policy](SECURITY.md)
 
 ## License
 
 Apache License 2.0 - See [LICENSE](LICENSE) for details.
+
+---
+
+**Copyright © 2025-2026 Blackout Secure**  
+Website: [blackoutsecure.app](https://blackoutsecure.app)

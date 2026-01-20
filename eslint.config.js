@@ -1,6 +1,6 @@
 /**
  * ESLint Configuration
- * Copyright © 2025 Blackout Secure
+ * Copyright © 2025-2026 Blackout Secure
  * SPDX-License-Identifier: Apache-2.0
  */
 

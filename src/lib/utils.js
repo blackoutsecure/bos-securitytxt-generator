@@ -1,9 +1,14 @@
-/**
- * Copyright 2025 Blackout Secure
- * SPDX-License-Identifier: Apache-2.0
- *
- * General utility functions for security.txt generation
- */
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Blackout Secure Security TXT Generator GitHub Action
+// Copyright © 2025-2026 Blackout Secure
+// Licensed under Apache License 2.0
+// Website: https://blackoutsecure.app
+// Repository: https://github.com/blackoutsecure/bos-securitytxt-generator
+// Issues: https://github.com/blackoutsecure/bos-securitytxt-generator/issues
+// Docs: https://github.com/blackoutsecure/bos-securitytxt-generator#readme
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// General utility functions for file system, URL, and git operations
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const fs = require('fs');
 const path = require('path');

@@ -139,7 +139,9 @@ describe('Action entrypoint', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       assert.ok(
-        logs.some((line) => line.includes('Blackout Secure Security TXT Generator')),
+        logs.some((line) =>
+          line.includes('Blackout Secure Security TXT Generator'),
+        ),
         'header logged',
       );
       assert.ok(

@@ -1,14 +1,30 @@
-/**
- * Copyright 2025 Blackout Secure
- * SPDX-License-Identifier: Apache-2.0
- */
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Blackout Secure Security TXT Generator GitHub Action
+// Copyright © 2025-2026 Blackout Secure
+// Licensed under Apache License 2.0
+// Website: https://blackoutsecure.app
+// Repository: https://github.com/blackoutsecure/bos-securitytxt-generator
+// Issues: https://github.com/blackoutsecure/bos-securitytxt-generator/issues
+// Docs: https://github.com/blackoutsecure/bos-securitytxt-generator#readme
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Main entry point for generating RFC 9116 compliant security.txt files
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const core = require('@actions/core');
 const path = require('path');
 const fs = require('fs');
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Artifact Client Initialization
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 let artifactClient;
 
+/**
+ * Initialize the GitHub Actions artifact client for uploading generated files
+ * Supports both DefaultArtifactClient and legacy artifact interfaces
+ * @returns {object|null} Artifact client instance or null if not available
+ */
 function initializeArtifactClient() {
   if (artifactClient !== undefined) {
     return artifactClient;
@@ -35,23 +51,46 @@ function initializeArtifactClient() {
   return artifactClient;
 }
 
-// Library imports
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Library Imports
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 const { buildSecurityTxt } = require('./lib/security-parser');
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Output Formatting Functions
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * Print branded header banner to action output
+ * @param {object} core - GitHub Actions core module
+ */
 function printHeader(core) {
   core.info('╔════════════════════════════════════════╗');
   core.info('║  Blackout Secure Security TXT Generator ║');
   core.info('║    RFC 9116 Vulnerability Disclosure   ║');
   core.info('║                                        ║');
-  core.info('║   Copyright © 2025 Blackout Secure    ║');
+  core.info('║  Copyright © 2025-2026 Blackout Secure ║');
   core.info('║     Licensed under Apache License 2.0 ║');
   core.info('╚════════════════════════════════════════╝');
 }
 
+/**
+ * Print completion message to action output
+ * @param {object} core - GitHub Actions core module
+ */
 function printFooter(core) {
   core.info('✓ Security.txt generation completed');
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Main Execution Function
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * Main execution function for the GitHub Action
+ * Reads inputs, generates security.txt, and optionally uploads artifacts
+ */
 async function run() {
   try {
     // Print application header
@@ -80,7 +119,9 @@ async function run() {
     const artifactRetentionDays = core.getInput('artifact_retention_days');
     const debug = /^true$/i.test(core.getInput('debug') || 'false');
 
-    // Log configuration
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Configuration Logging
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     core.info('⚙️  Configuration:');
     core.info(`   Output Directory: ${outputDir}`);
     if (siteUrl) core.info(`   Site URL: ${siteUrl}`);
@@ -88,7 +129,9 @@ async function run() {
     if (securityExpires) core.info(`   Expires: ${securityExpires}`);
     if (securityPolicy) core.info(`   Policy: ${securityPolicy}`);
 
-    // Build security.txt content
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Security.txt Content Generation
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const securityData = {
       contact: securityContact,
       expires: securityExpires,
@@ -111,7 +154,9 @@ async function run() {
       );
     }
 
-    // Create output directory structure
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // File System Operations
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const wellKnownDir = path.join(outputDir, '.well-known');
     if (!fs.existsSync(wellKnownDir)) {
       fs.mkdirSync(wellKnownDir, { recursive: true });
@@ -128,7 +173,9 @@ async function run() {
       core.info(securityTxt);
     }
 
-    // Upload artifacts
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Artifact Upload (Optional)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const client = initializeArtifactClient();
     if (uploadArtifacts && client) {
       core.info('📦 Uploading artifacts...');
