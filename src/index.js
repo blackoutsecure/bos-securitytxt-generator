@@ -57,8 +57,62 @@ function initializeArtifactClient() {
 
 const { buildSecurityTxt } = require('./lib/security-parser');
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Output Formatting Functions
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━// Date Parsing and Validation
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * Parse expires date from various formats
+ * @param {string} input - User input (ISO 8601, "30d", "6m", "1y", or empty)
+ * @returns {object} {date: ISO string, daysFromNow: number}
+ */
+function parseExpiresDate(input) {
+  let targetDate;
+  let isoString;
+  const now = new Date();
+
+  if (!input) {
+    // Default: 180 days (6 months) - well under 1 year per RFC 9116
+    targetDate = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+    isoString = targetDate.toISOString();
+  } else if (/^\d+d$/i.test(input)) {
+    // Days format: "30d", "180d"
+    const days = parseInt(input, 10);
+    targetDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    isoString = targetDate.toISOString();
+  } else if (/^\d+m$/i.test(input)) {
+    // Months format: "6m", "12m"
+    const months = parseInt(input, 10);
+    targetDate = new Date(now);
+    targetDate.setMonth(targetDate.getMonth() + months);
+    isoString = targetDate.toISOString();
+  } else if (/^\d+y$/i.test(input)) {
+    // Years format: "1y"
+    const years = parseInt(input, 10);
+    targetDate = new Date(now);
+    targetDate.setFullYear(targetDate.getFullYear() + years);
+    isoString = targetDate.toISOString();
+  } else {
+    // Assume ISO 8601 format or parseable date string
+    targetDate = new Date(input);
+    if (isNaN(targetDate.getTime())) {
+      throw new Error(
+        `Invalid expires date format: "${input}". Use ISO 8601, "30d", "6m", or "1y".`,
+      );
+    }
+    // Preserve original format if it's already ISO 8601
+    isoString = input;
+  }
+
+  const daysFromNow = Math.round(
+    (targetDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000),
+  );
+  return {
+    date: isoString,
+    daysFromNow,
+  };
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━// Output Formatting Functions
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
@@ -97,10 +151,17 @@ async function run() {
     printHeader(core);
 
     // Read inputs
-    const outputDir = core.getInput('public_dir') || '.';
+    const outputDir = core.getInput('public_dir') || 'dist';
     const siteUrl = core.getInput('site_url');
     const securityContact = core.getInput('security_contact');
-    const securityExpires = core.getInput('security_expires');
+
+    // Validate required contact field per RFC 9116 § 2.5.3
+    if (!securityContact) {
+      throw new Error(
+        'security_contact is required per RFC 9116 § 2.5.3. Must be a URI (mailto:, https://, tel:) or email address.',
+      );
+    }
+    const securityExpiresInput = core.getInput('security_expires');
     const securityAcknowledgments = core.getInput('security_acknowledgments');
     const securityCanonical = core.getInput('security_canonical');
     const securityEncryption = core.getInput('security_encryption');
@@ -118,6 +179,21 @@ async function run() {
     const artifactName = core.getInput('artifact_name') || 'securitytxt';
     const artifactRetentionDays = core.getInput('artifact_retention_days');
     const debug = /^true$/i.test(core.getInput('debug') || 'false');
+
+    // Parse and validate expires date
+    const { date: securityExpires, daysFromNow } =
+      parseExpiresDate(securityExpiresInput);
+
+    // RFC 9116 compliance check
+    if (daysFromNow > 365) {
+      core.warning(
+        `⚠️  Expires date is ${daysFromNow} days from now. RFC 9116 recommends less than 1 year (365 days) to avoid staleness.`,
+      );
+    } else if (!securityExpiresInput) {
+      core.info(
+        `ℹ️  Using default expiration: ${daysFromNow} days (${securityExpires})`,
+      );
+    }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Configuration Logging

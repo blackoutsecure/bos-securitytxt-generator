@@ -35,11 +35,7 @@ jobs:
       - name: Generate security.txt
         uses: blackoutsecure/bos-securitytxt-generator@v1
         with:
-          public_dir: 'public'
-          site_url: 'https://example.com'
-          security_contact: 'mailto:security@example.com'
-          security_expires: '2026-12-31T23:59:59Z'
-          security_policy: 'https://example.com/security'
+          security_contact: 'security@example.com'
 ```
 
 ## Configuration
@@ -48,13 +44,25 @@ See [action.yml](action.yml) for all available inputs.
 
 ### Required Inputs
 
-- **`security_contact`** - Contact method for security reports (e.g., `mailto:security@example.com`)
-- **`security_expires`** - Expiration date in ISO 8601 format (e.g., `2026-12-31T23:59:59Z`)
+- **`security_contact`** - Contact method(s) for security vulnerability reports. **Required per [RFC 9116 § 2.5.3](https://www.rfc-editor.org/rfc/rfc9116#section-2.5.3)**. Must be a URI using `mailto:`, `https://`, or `tel:` scheme. Emails are auto-converted to `mailto:` URIs. Comma-separated for multiple contacts.
+  - Examples:
+    - `security@example.com` (auto-converted to `mailto:security@example.com`)
+    - `https://example.com/security`
+    - `security@example.com,https://example.com/report`
 
 ### Optional Inputs
 
-- **`site_url`** - Your website URL (e.g., `https://example.com`)
-- **`public_dir`** - Directory to write security.txt (default: current directory)
+- **`security_expires`** - Expiration date for security.txt validity. [RFC 9116 § 2.5.5](https://www.rfc-editor.org/rfc/rfc9116#section-2.5.5) recommends < 1 year (365 days).
+  - **Default:** `180d` (6 months)
+  - **Formats supported:**
+    - ISO 8601 timestamp: `2026-12-31T23:59:59Z`
+    - Days: `30d`, `180d`, `365d`
+    - Months: `6m`, `12m`
+    - Years: `1y`
+  - ⚠️ Values > 365 days trigger RFC compliance warning
+
+- **`site_url`** - Your website URL (e.g., `https://example.com`). Optional but recommended for canonical URI generation.
+- **`public_dir`** - Directory to write security.txt. **Default:** `dist`
 - **`security_policy`** - Link to vulnerability disclosure policy
 - **`security_acknowledgments`** - Link to security researchers hall of fame
 - **`security_encryption`** - OpenPGP encryption key URL
@@ -86,8 +94,8 @@ Per RFC 9116, the file **must** be served at `/.well-known/security.txt` over HT
   with:
     public_dir: 'public'
     site_url: 'https://example.com'
-    security_contact: 'mailto:security@example.com,https://example.com/report'
-    security_expires: '2026-12-31T23:59:59Z'
+    security_contact: 'security@example.com,https://example.com/report'
+    security_expires: '6m' # 6 months (or use 180d, 2026-12-31T23:59:59Z, etc.)
     security_policy: 'https://example.com/security'
     security_acknowledgments: 'https://example.com/hall-of-fame'
     security_encryption: 'https://example.com/security-key.asc'
@@ -100,12 +108,25 @@ Per RFC 9116, the file **must** be served at `/.well-known/security.txt` over HT
 
 ## RFC 9116 Compliance
 
-Fully compliant with [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116):
+Fully compliant with [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116) ([securitytxt.org](https://securitytxt.org/)):
 
-- ✅ Required fields: `Contact`, `Expires`
-- ✅ Optional fields: `Acknowledgments`, `Canonical`, `Encryption`, `Hiring`, `Policy`, `Preferred-Languages`
+- ✅ **Required fields:** `Contact` (§ 2.5.3), `Expires` (§ 2.5.5)
+- ✅ **Optional fields:** `Acknowledgments`, `Canonical`, `Encryption`, `Hiring`, `Policy`, `Preferred-Languages`
+- ✅ **Contact validation:** Must be URI (`mailto:`, `https://`, `tel:`) per § 2.5.3
+- ✅ **Expires recommendation:** < 1 year (365 days) per § 2.5.5
 - ✅ Proper UTF-8 encoding and machine-parsable format
 - ✅ Serves at `/.well-known/security.txt` over HTTPS
+
+### Contact Field Requirements
+
+Per [RFC 9116 § 2.5.3](https://www.rfc-editor.org/rfc/rfc9116#section-2.5.3), the Contact field:
+
+- **MUST** appear at least once (required)
+- **MUST** be a valid URI (e.g., `mailto:`, `https://`, `tel:`)
+- **MAY** appear multiple times for different contact methods
+- Web URIs (`https://`) are preferred over email for spam prevention
+
+This action automatically converts email addresses to `mailto:` URIs for RFC compliance.
 
 ## Contributing
 

@@ -12,18 +12,19 @@ runs:
   main: 'dist/index.js'
 inputs:
   public_dir:
-    description: 'Directory to write security.txt (defaults to current directory). File will be placed in .well-known/ subdirectory per RFC 9116.'
+    description: 'Directory to write security.txt (default: dist). File will be placed in .well-known/ subdirectory per RFC 9116.'
     required: false
-    default: '.'
+    default: 'dist'
   site_url:
-    description: 'Public base URL of the site, e.g., https://example.com. Used for canonical URI.'
+    description: 'Public base URL of the site, e.g., https://example.com. Used for canonical URI (optional).'
     required: false
   security_contact:
-    description: 'REQUIRED: Contact method(s) for security vulnerability reports. Comma-separated list. Use mailto: for email, tel: for phone, or https:// for web page. Example: mailto:security@example.com,https://example.com/security'
-    required: false
+    description: 'Contact method(s) for security vulnerability reports (REQUIRED per RFC 9116). Comma-separated list. Must be a URI: mailto:, https://, or tel:. Auto-converts emails. Example: security@example.com,https://example.com/security'
+    required: true
   security_expires:
-    description: 'REQUIRED: Expiration date in ISO 8601 format (e.g., 2025-12-31T23:59:59Z). RFC recommends < 1 year. Auto-generated (1 year from now) if not provided.'
+    description: 'Expiration date for security.txt validity. Formats: ISO 8601 (2026-12-31T23:59:59Z), days (180d), months (6m), years (1y). Default: 180d (6 months). RFC 9116 recommends < 1 year (365 days).'
     required: false
+    default: '180d'
   security_acknowledgments:
     description: 'Optional: URL(s) to security researchers hall of fame page. Must use https://. Comma-separated for multiple.'
     required: false

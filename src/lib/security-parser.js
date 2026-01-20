@@ -46,10 +46,29 @@ function buildSecurityTxt(options = {}) {
 
   // Validate required fields
   if (!contact || (Array.isArray(contact) && contact.length === 0)) {
-    throw new Error('Contact field is required per RFC 9116');
+    throw new Error('Contact field is required per RFC 9116 § 2.5.3');
   }
   if (!expires) {
-    throw new Error('Expires field is required per RFC 9116');
+    throw new Error('Expires field is required per RFC 9116 § 2.5.5');
+  }
+
+  // Validate contact URIs per RFC 9116 § 2.5.3
+  const contacts = Array.isArray(contact) ? contact : [contact];
+  for (const c of contacts) {
+    // Contact must be a URI or email/phone that can be converted to URI
+    const isEmail = c.includes('@');
+    const isPhone = /^\+?\d/.test(c);
+    const isUri =
+      c.startsWith('mailto:') ||
+      c.startsWith('https://') ||
+      c.startsWith('http://') ||
+      c.startsWith('tel:');
+
+    if (!isEmail && !isPhone && !isUri) {
+      throw new Error(
+        `Invalid contact URI: "${c}". Per RFC 9116 § 2.5.3, contact must be a URI (mailto:, https://, tel:) or email address.`,
+      );
+    }
   }
 
   const lines = [];
@@ -80,7 +99,7 @@ function buildSecurityTxt(options = {}) {
   if (includeComments) {
     lines.push('# Contact information for security researchers');
   }
-  const contacts = Array.isArray(contact) ? contact : [contact];
+  // Reuse contacts array from validation above
   for (const c of contacts) {
     // Ensure proper URI format
     let contactUri = c;
