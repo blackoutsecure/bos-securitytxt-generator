@@ -1,0 +1,69 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Blackout Secure Security TXT Generator GitHub Action
+# Copyright © 2025 Blackout Secure
+# Licensed under Apache License 2.0
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+name: 'Blackout Secure Security TXT Generator'
+description: 'Blackout Secure Security TXT Generator - Automated security.txt generation per RFC 9116 for vulnerability disclosure'
+author: 'Blackout Secure'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+inputs:
+  output_dir:
+    description: 'Directory to write security.txt (defaults to current directory). File will be placed in .well-known/ subdirectory per RFC 9116.'
+    required: false
+    default: '.'
+  site_url:
+    description: 'Public base URL of the site, e.g., https://example.com. Used for canonical URI.'
+    required: false
+  security_contact:
+    description: 'REQUIRED: Contact method(s) for security vulnerability reports. Comma-separated list. Use mailto: for email, tel: for phone, or https:// for web page. Example: mailto:security@example.com,https://example.com/security'
+    required: false
+  security_expires:
+    description: 'REQUIRED: Expiration date in ISO 8601 format (e.g., 2025-12-31T23:59:59Z). RFC recommends < 1 year. Auto-generated (1 year from now) if not provided.'
+    required: false
+  security_acknowledgments:
+    description: 'Optional: URL(s) to security researchers hall of fame page. Must use https://. Comma-separated for multiple.'
+    required: false
+  security_canonical:
+    description: 'Optional: Canonical URI(s) where this file is located. Must use https://. Auto-generated from site_url if not provided. Comma-separated for multiple.'
+    required: false
+  security_encryption:
+    description: 'Optional: URL(s) to OpenPGP encryption key for secure communication. Must use https:// or openpgp4fpr: scheme. Comma-separated for multiple.'
+    required: false
+  security_hiring:
+    description: 'Optional: URL(s) to security-related job postings. Must use https://. Comma-separated for multiple.'
+    required: false
+  security_policy:
+    description: 'Optional: URL(s) to vulnerability disclosure policy page. Must use https://. Comma-separated for multiple.'
+    required: false
+  security_preferred_languages:
+    description: 'Optional: Comma-separated language codes for preferred report languages (e.g., "en, es, fr"). Uses RFC 5646 language tags.'
+    required: false
+  security_comments:
+    description: 'Include RFC 9116 reference comments at the top of security.txt'
+    required: false
+    default: 'true'
+  upload_artifacts:
+    description: 'Upload generated security.txt as GitHub artifacts'
+    required: false
+    default: 'true'
+  artifact_name:
+    description: 'Name of the GitHub artifact when upload_artifacts is enabled'
+    required: false
+    default: 'securitytxt'
+  artifact_retention_days:
+    description: 'Number of days to retain the artifact (1-90). Leave empty for default (35 days)'
+    required: false
+  debug:
+    description: 'Debug: Display generated security.txt content'
+    required: false
+    default: 'false'
+outputs:
+  security_path:
+    description: 'Path to the generated security.txt'
+branding:
+  color: 'blue'
+  icon: 'shield'

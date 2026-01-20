@@ -1,0 +1,13 @@
+{
+  "inputs": {
+    "security_contact": "security@example.com",
+    "security_expires": "2026-12-31T23:59:59Z",
+    "security_policy": "https://example.com/security",
+    "security_acknowledgments": "https://example.com/hall-of-fame",
+    "security_comments": "true",
+    "output_dir": ".well-known",
+    "upload_artifacts": "true",
+    "artifact_name": "securitytxt",
+    "artifact_retention_days": "30"
+  }
+}
