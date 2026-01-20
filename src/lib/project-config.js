@@ -16,7 +16,7 @@ const HEADER_DIVIDER =
 const PROJECT_CONFIG = {
   // Project identity
   name: 'Blackout Secure Security TXT Generator',
-  version: '1.0.0', // keep in sync with package.json via version scripts
+  version: '1.0.1', // keep in sync with package.json via version scripts
   brandingEmoji: '🛡️',
 
   // Repository information
