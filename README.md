@@ -40,12 +40,6 @@ jobs:
           security_contact: 'mailto:security@example.com'
           security_expires: '2026-12-31T23:59:59Z'
           security_policy: 'https://example.com/security'
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: securitytxt
-          path: public/.well-known/security.txt
 ```
 
 ## Configuration
