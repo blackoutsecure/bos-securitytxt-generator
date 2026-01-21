@@ -120,13 +120,22 @@ function parseExpiresDate(input) {
  * @param {object} core - GitHub Actions core module
  */
 function printHeader(core) {
-  core.info('╔════════════════════════════════════════╗');
-  core.info('║  Blackout Secure Security TXT Generator ║');
-  core.info('║    RFC 9116 Vulnerability Disclosure   ║');
-  core.info('║                                        ║');
-  core.info('║  Copyright © 2025-2026 Blackout Secure ║');
-  core.info('║     Licensed under Apache License 2.0 ║');
-  core.info('╚════════════════════════════════════════╝');
+  const {
+    getProjectTitle,
+    getRepositoryUrl,
+    getSupportUrl,
+    getDocsUrl,
+    getCopyrightNotice,
+  } = require('./lib/project-config');
+
+  const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  core.info(divider);
+  core.info(getProjectTitle());
+  core.info(divider);
+  core.info(getCopyrightNotice());
+  core.info(getRepositoryUrl());
+  core.info(getSupportUrl());
+  core.info(divider);
 }
 
 /**
@@ -134,7 +143,18 @@ function printHeader(core) {
  * @param {object} core - GitHub Actions core module
  */
 function printFooter(core) {
+  const {
+    getRepositoryUrl,
+    getCopyrightNotice,
+  } = require('./lib/project-config');
+  const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
   core.info('✓ Security.txt generation completed');
+  core.info(divider);
+  core.info('✅ Security.txt generation complete!');
+  core.info(divider);
+  core.info(getCopyrightNotice());
+  core.info(getRepositoryUrl());
+  core.info(divider);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -198,12 +218,30 @@ async function run() {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Configuration Logging
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const keyPad = (label) => `${label}:`.padEnd(22, ' ');
     core.info('⚙️  Configuration:');
-    core.info(`   Output Directory: ${outputDir}`);
-    if (siteUrl) core.info(`   Site URL: ${siteUrl}`);
-    if (securityContact) core.info(`   Contact: ${securityContact}`);
-    if (securityExpires) core.info(`   Expires: ${securityExpires}`);
-    if (securityPolicy) core.info(`   Policy: ${securityPolicy}`);
+    if (siteUrl) core.info(`   ${keyPad('Site URL')} ${siteUrl}`);
+    core.info(`   ${keyPad('Public Directory')} ./${outputDir}`);
+    core.info(`   ${keyPad('Security Output Dir')} ./${outputDir}`);
+    core.info(`   ${keyPad('Security Filename')} security.txt`);
+    core.info(`   ${keyPad('Contact')} ${securityContact}`);
+    core.info(`   ${keyPad('Expires')} ${securityExpires}`);
+    const canonicalPreview =
+      securityCanonical ||
+      (siteUrl ? `${siteUrl}/.well-known/security.txt` : '') ||
+      '(none)';
+    core.info(`   ${keyPad('Canonical')} ${canonicalPreview}`);
+    core.info(
+      `   ${keyPad('Include Comments')} ${securityComments ? 'Yes' : 'No'}`,
+    );
+    core.info(
+      `   ${keyPad('Upload Artifacts')} ${uploadArtifacts ? 'Enabled' : 'Disabled'}`,
+    );
+    if (artifactRetentionDays) {
+      core.info(
+        `   ${keyPad('Artifact Retention')} ${artifactRetentionDays} day(s)`,
+      );
+    }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Security.txt Content Generation
@@ -222,6 +260,8 @@ async function run() {
       includeComments: securityComments,
     };
 
+    core.info('');
+    core.info('📝 Generating security.txt...');
     const securityTxt = buildSecurityTxt(securityData);
 
     if (!securityTxt) {
@@ -241,7 +281,35 @@ async function run() {
     // Write security.txt
     const securityTxtPath = path.join(wellKnownDir, 'security.txt');
     fs.writeFileSync(securityTxtPath, securityTxt, 'utf-8');
-    core.info(`✓ Generated: ${securityTxtPath}`);
+    // Validation block
+    const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    core.info('');
+    core.info('🔍 Validation:');
+    try {
+      const stats = fs.statSync(securityTxtPath);
+      const sizeKb = (stats.size / 1024).toFixed(2);
+      core.info(`   ✓ Size OK (${sizeKb} KB)`);
+    } catch {
+      // ignore size errors
+    }
+    const hasContact = /\n?Contact:\s/.test(securityTxt);
+    const hasExpires = /\n?Expires:\s/.test(securityTxt);
+    if (hasContact && hasExpires) {
+      core.info('   ✓ Contains required fields (Contact, Expires)');
+    }
+    const hasCanonical = /\n?Canonical:\s/.test(securityTxt);
+    if (hasCanonical) {
+      core.info('   ✓ Contains Canonical reference');
+    }
+
+    core.info(
+      `✅ security.txt written: ${path.relative(process.cwd(), securityTxtPath)}`,
+    );
+    try {
+      const stats2 = fs.statSync(securityTxtPath);
+      const sizeKb2 = (stats2.size / 1024).toFixed(2);
+      core.info(`   Size: ${sizeKb2} KB`);
+    } catch {}
 
     // Show content in debug mode
     if (debug) {
