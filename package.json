@@ -46,7 +46,7 @@
     "release": "node src/lib/release.js"
   },
   "dependencies": {
-    "@actions/artifact": "^2.1.2",
+    "@actions/artifact": "^5.0.2",
     "@actions/core": "^1.11.1"
   },
   "devDependencies": {
