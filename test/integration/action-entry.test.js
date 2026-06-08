@@ -36,9 +36,7 @@ describe('Action entrypoint', () => {
 
   before(function () {
     if (!fs.existsSync(srcPath)) {
-      throw new Error(
-        `Action entry point missing: ${srcPath}. Check src directory.`,
-      );
+      throw new Error(`Action entry point missing: ${srcPath}. Check src directory.`);
     }
     originalGithubActions = process.env.GITHUB_ACTIONS;
   });
@@ -80,11 +78,7 @@ describe('Action entrypoint', () => {
       delete require.cache[require.resolve(srcPath)];
       require(srcPath);
 
-      const securityTxtPath = path.join(
-        outputDir,
-        '.well-known',
-        'security.txt',
-      );
+      const securityTxtPath = path.join(outputDir, '.well-known', 'security.txt');
       await waitForFile(securityTxtPath);
 
       const content = fs.readFileSync(securityTxtPath, 'utf8');
@@ -128,20 +122,14 @@ describe('Action entrypoint', () => {
       delete require.cache[require.resolve(srcPath)];
       require(srcPath);
 
-      const securityTxtPath = path.join(
-        outputDir,
-        '.well-known',
-        'security.txt',
-      );
+      const securityTxtPath = path.join(outputDir, '.well-known', 'security.txt');
       await waitForFile(securityTxtPath);
 
       // Give a moment for async operations to complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       assert.ok(
-        logs.some((line) =>
-          line.includes('Blackout Secure Security TXT Generator'),
-        ),
+        logs.some((line) => line.includes('Blackout Secure Security TXT Generator')),
         'header logged',
       );
       assert.ok(
@@ -168,18 +156,11 @@ describe('Action entrypoint', () => {
       delete require.cache[require.resolve(srcPath)];
       require(srcPath);
 
-      const securityTxtPath = path.join(
-        outputDir,
-        '.well-known',
-        'security.txt',
-      );
+      const securityTxtPath = path.join(outputDir, '.well-known', 'security.txt');
       await waitForFile(securityTxtPath);
 
       const content = fs.readFileSync(securityTxtPath, 'utf8');
-      assert.match(
-        content,
-        /Canonical: https:\/\/example\.com\/\.well-known\/security\.txt/,
-      );
+      assert.match(content, /Canonical: https:\/\/example\.com\/\.well-known\/security\.txt/);
       assert.match(content, /# security\.txt file per RFC 9116/);
       assert.match(content, /Contact: mailto:contact@example.com/);
     } finally {
@@ -222,11 +203,7 @@ describe('Action entrypoint', () => {
       delete require.cache[require.resolve(srcPath)];
       require(srcPath);
 
-      const securityTxtPath = path.join(
-        outputDir,
-        '.well-known',
-        'security.txt',
-      );
+      const securityTxtPath = path.join(outputDir, '.well-known', 'security.txt');
       await waitForFile(securityTxtPath);
 
       // Give a moment for async operations to complete

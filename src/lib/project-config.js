@@ -10,8 +10,7 @@
 // Project metadata and branding configuration
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const HEADER_DIVIDER =
-  '# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+const HEADER_DIVIDER = '# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
 
 const PROJECT_CONFIG = {
   // Project identity
@@ -23,8 +22,7 @@ const PROJECT_CONFIG = {
   repository: {
     url: 'github.com/blackoutsecure/bos-securitytxt-generator',
     issuesUrl: 'github.com/blackoutsecure/bos-securitytxt-generator/issues',
-    docsUrl:
-      'https://github.com/blackoutsecure/bos-securitytxt-generator#readme',
+    docsUrl: 'https://github.com/blackoutsecure/bos-securitytxt-generator#readme',
   },
 
   // Company information
@@ -53,8 +51,7 @@ const PROJECT_CONFIG = {
  * @returns {string} Copyright notice string
  */
 function getCopyrightNotice() {
-  const { copyrightHolder, copyrightYearStart, copyrightYearEnd } =
-    PROJECT_CONFIG;
+  const { copyrightHolder, copyrightYearStart, copyrightYearEnd } = PROJECT_CONFIG;
   const yearRange =
     copyrightYearStart === copyrightYearEnd
       ? copyrightYearStart

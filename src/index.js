@@ -37,10 +37,7 @@ function initializeArtifactClient() {
       const artifact = require('@actions/artifact');
       if (artifact?.DefaultArtifactClient) {
         artifactClient = new artifact.DefaultArtifactClient();
-      } else if (
-        artifact?.default &&
-        typeof artifact.default.uploadArtifact === 'function'
-      ) {
+      } else if (artifact?.default && typeof artifact.default.uploadArtifact === 'function') {
         artifactClient = artifact.default;
       }
     }
@@ -103,9 +100,7 @@ function parseExpiresDate(input) {
     isoString = input;
   }
 
-  const daysFromNow = Math.round(
-    (targetDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000),
-  );
+  const daysFromNow = Math.round((targetDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
   return {
     date: isoString,
     daysFromNow,
@@ -124,7 +119,6 @@ function printHeader(core) {
     getProjectTitle,
     getRepositoryUrl,
     getSupportUrl,
-    getDocsUrl,
     getCopyrightNotice,
   } = require('./lib/project-config');
 
@@ -143,10 +137,7 @@ function printHeader(core) {
  * @param {object} core - GitHub Actions core module
  */
 function printFooter(core) {
-  const {
-    getRepositoryUrl,
-    getCopyrightNotice,
-  } = require('./lib/project-config');
+  const { getRepositoryUrl, getCopyrightNotice } = require('./lib/project-config');
   const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
   core.info('✓ Security.txt generation completed');
   core.info(divider);
@@ -187,22 +178,15 @@ async function run() {
     const securityEncryption = core.getInput('security_encryption');
     const securityHiring = core.getInput('security_hiring');
     const securityPolicy = core.getInput('security_policy');
-    const securityPreferredLanguages = core.getInput(
-      'security_preferred_languages',
-    );
-    const securityComments = /^true$/i.test(
-      core.getInput('security_comments') || 'true',
-    );
-    const uploadArtifacts = /^true$/i.test(
-      core.getInput('upload_artifacts') || 'true',
-    );
+    const securityPreferredLanguages = core.getInput('security_preferred_languages');
+    const securityComments = /^true$/i.test(core.getInput('security_comments') || 'true');
+    const uploadArtifacts = /^true$/i.test(core.getInput('upload_artifacts') || 'true');
     const artifactName = core.getInput('artifact_name') || 'securitytxt';
     const artifactRetentionDays = core.getInput('artifact_retention_days');
     const debug = /^true$/i.test(core.getInput('debug') || 'false');
 
     // Parse and validate expires date
-    const { date: securityExpires, daysFromNow } =
-      parseExpiresDate(securityExpiresInput);
+    const { date: securityExpires, daysFromNow } = parseExpiresDate(securityExpiresInput);
 
     // RFC 9116 compliance check
     if (daysFromNow > 365) {
@@ -210,9 +194,7 @@ async function run() {
         `⚠️  Expires date is ${daysFromNow} days from now. RFC 9116 recommends less than 1 year (365 days) to avoid staleness.`,
       );
     } else if (!securityExpiresInput) {
-      core.info(
-        `ℹ️  Using default expiration: ${daysFromNow} days (${securityExpires})`,
-      );
+      core.info(`ℹ️  Using default expiration: ${daysFromNow} days (${securityExpires})`);
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -227,20 +209,12 @@ async function run() {
     core.info(`   ${keyPad('Contact')} ${securityContact}`);
     core.info(`   ${keyPad('Expires')} ${securityExpires}`);
     const canonicalPreview =
-      securityCanonical ||
-      (siteUrl ? `${siteUrl}/.well-known/security.txt` : '') ||
-      '(none)';
+      securityCanonical || (siteUrl ? `${siteUrl}/.well-known/security.txt` : '') || '(none)';
     core.info(`   ${keyPad('Canonical')} ${canonicalPreview}`);
-    core.info(
-      `   ${keyPad('Include Comments')} ${securityComments ? 'Yes' : 'No'}`,
-    );
-    core.info(
-      `   ${keyPad('Upload Artifacts')} ${uploadArtifacts ? 'Enabled' : 'Disabled'}`,
-    );
+    core.info(`   ${keyPad('Include Comments')} ${securityComments ? 'Yes' : 'No'}`);
+    core.info(`   ${keyPad('Upload Artifacts')} ${uploadArtifacts ? 'Enabled' : 'Disabled'}`);
     if (artifactRetentionDays) {
-      core.info(
-        `   ${keyPad('Artifact Retention')} ${artifactRetentionDays} day(s)`,
-      );
+      core.info(`   ${keyPad('Artifact Retention')} ${artifactRetentionDays} day(s)`);
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -249,9 +223,7 @@ async function run() {
     const securityData = {
       contact: securityContact,
       expires: securityExpires,
-      canonical:
-        securityCanonical ||
-        (siteUrl ? `${siteUrl}/.well-known/security.txt` : undefined),
+      canonical: securityCanonical || (siteUrl ? `${siteUrl}/.well-known/security.txt` : undefined),
       acknowledgments: securityAcknowledgments,
       encryption: securityEncryption,
       hiring: securityHiring,
@@ -265,9 +237,7 @@ async function run() {
     const securityTxt = buildSecurityTxt(securityData);
 
     if (!securityTxt) {
-      throw new Error(
-        'Failed to generate security.txt. Check inputs and try again.',
-      );
+      throw new Error('Failed to generate security.txt. Check inputs and try again.');
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -282,7 +252,6 @@ async function run() {
     const securityTxtPath = path.join(wellKnownDir, 'security.txt');
     fs.writeFileSync(securityTxtPath, securityTxt, 'utf-8');
     // Validation block
-    const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
     core.info('');
     core.info('🔍 Validation:');
     try {
@@ -302,14 +271,14 @@ async function run() {
       core.info('   ✓ Contains Canonical reference');
     }
 
-    core.info(
-      `✅ security.txt written: ${path.relative(process.cwd(), securityTxtPath)}`,
-    );
+    core.info(`✅ security.txt written: ${path.relative(process.cwd(), securityTxtPath)}`);
     try {
       const stats2 = fs.statSync(securityTxtPath);
       const sizeKb2 = (stats2.size / 1024).toFixed(2);
       core.info(`   Size: ${sizeKb2} KB`);
-    } catch {}
+    } catch (error) {
+      core.debug(`Unable to read generated file stats: ${error.message}`);
+    }
 
     // Show content in debug mode
     if (debug) {
@@ -329,12 +298,7 @@ async function run() {
       }
 
       try {
-        await client.uploadArtifact(
-          artifactName,
-          [securityTxtPath],
-          outputDir,
-          uploadOptions,
-        );
+        await client.uploadArtifact(artifactName, [securityTxtPath], outputDir, uploadOptions);
         core.info(`✓ Artifact uploaded: ${artifactName}`);
       } catch (err) {
         core.warning(`⚠️  Failed to upload artifact: ${err.message}`);

@@ -79,10 +79,7 @@ const TEST_CONFIG = {
   },
 
   // Additional URLs for testing
-  ADDITIONAL_URLS: [
-    'https://example.com/manual-1',
-    'https://example.com/docs/guide',
-  ],
+  ADDITIONAL_URLS: ['https://example.com/manual-1', 'https://example.com/docs/guide'],
 
   // URL variants for testing
   URL_VARIANTS: {
@@ -126,10 +123,7 @@ function validateConfig() {
   const maxActionTimeout = 30000; // hard safety cap for runner cost control
   const maxAsyncWait = 10000; // per-wait cap to avoid long hangs
 
-  if (
-    !Number.isFinite(TEST_CONFIG.ACTION_TIMEOUT_MS) ||
-    TEST_CONFIG.ACTION_TIMEOUT_MS <= 0
-  ) {
+  if (!Number.isFinite(TEST_CONFIG.ACTION_TIMEOUT_MS) || TEST_CONFIG.ACTION_TIMEOUT_MS <= 0) {
     throw new Error('TEST_CONFIG.ACTION_TIMEOUT_MS must be a positive number');
   }
   if (TEST_CONFIG.ACTION_TIMEOUT_MS > maxActionTimeout) {
@@ -138,10 +132,7 @@ function validateConfig() {
     );
   }
 
-  if (
-    !Number.isFinite(TEST_CONFIG.ASYNC_WAIT_MS) ||
-    TEST_CONFIG.ASYNC_WAIT_MS <= 0
-  ) {
+  if (!Number.isFinite(TEST_CONFIG.ASYNC_WAIT_MS) || TEST_CONFIG.ASYNC_WAIT_MS <= 0) {
     throw new Error('TEST_CONFIG.ASYNC_WAIT_MS must be a positive number');
   }
   if (TEST_CONFIG.ASYNC_WAIT_MS > maxAsyncWait) {

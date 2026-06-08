@@ -20,12 +20,7 @@ const path = require('path');
 
 const ROOT_DIR = path.join(__dirname, '..', '..');
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');
-const PROJECT_CONFIG_PATH = path.join(
-  ROOT_DIR,
-  'src',
-  'lib',
-  'project-config.js',
-);
+const PROJECT_CONFIG_PATH = path.join(ROOT_DIR, 'src', 'lib', 'project-config.js');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // File Operations
@@ -37,20 +32,13 @@ function readPackageJson() {
 }
 
 function writePackageJson(pkg) {
-  fs.writeFileSync(
-    PACKAGE_JSON_PATH,
-    JSON.stringify(pkg, null, 2) + '\n',
-    'utf8',
-  );
+  fs.writeFileSync(PACKAGE_JSON_PATH, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
 }
 
 function updateProjectConfig(version) {
   try {
     const content = fs.readFileSync(PROJECT_CONFIG_PATH, 'utf8');
-    const next = content.replace(
-      /version:\s*['"][\d.]+['"]/,
-      `version: '${version}'`,
-    );
+    const next = content.replace(/version:\s*['"][\d.]+['"]/, `version: '${version}'`);
     if (next !== content) {
       fs.writeFileSync(PROJECT_CONFIG_PATH, next, 'utf8');
     }

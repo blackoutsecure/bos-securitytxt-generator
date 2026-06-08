@@ -5,10 +5,7 @@ const { TEST_CONFIG, getAbsolutePath } = require('./test-config');
 
 describe('Test Environment Setup', () => {
   it('should have required directories', () => {
-    assert.ok(
-      fs.existsSync(path.join(__dirname, '../src')),
-      'src directory exists',
-    );
+    assert.ok(fs.existsSync(path.join(__dirname, '../src')), 'src directory exists');
     assert.ok(
       fs.existsSync(getAbsolutePath(TEST_CONFIG.PUBLIC_DIR)),
       `${TEST_CONFIG.PUBLIC_DIR} directory exists`,

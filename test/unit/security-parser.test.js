@@ -6,10 +6,7 @@
  */
 
 const assert = require('assert');
-const {
-  buildSecurityTxt,
-  parseSecurityConfig,
-} = require('../../src/lib/security-parser');
+const { buildSecurityTxt, parseSecurityConfig } = require('../../src/lib/security-parser');
 
 describe('buildSecurityTxt', () => {
   it('should throw error when contact is missing', () => {
@@ -54,9 +51,7 @@ describe('buildSecurityTxt', () => {
 
     assert.ok(result.includes('# security.txt file per RFC 9116'));
     assert.ok(result.includes('# https://www.rfc-editor.org/rfc/rfc9116'));
-    assert.ok(
-      result.includes('# Contact information for security researchers'),
-    );
+    assert.ok(result.includes('# Contact information for security researchers'));
     assert.ok(result.includes('# Expiration date (ISO 8601 format)'));
   });
 
@@ -74,14 +69,8 @@ describe('buildSecurityTxt', () => {
 
     assert.ok(result.includes('Contact: mailto:security@example.com'));
     assert.ok(result.includes('Expires: 2025-12-31T23:59:59Z'));
-    assert.ok(
-      result.includes('Acknowledgments: https://example.com/hall-of-fame'),
-    );
-    assert.ok(
-      result.includes(
-        'Canonical: https://example.com/.well-known/security.txt',
-      ),
-    );
+    assert.ok(result.includes('Acknowledgments: https://example.com/hall-of-fame'));
+    assert.ok(result.includes('Canonical: https://example.com/.well-known/security.txt'));
     assert.ok(result.includes('Encryption: https://example.com/pgp-key.txt'));
     assert.ok(result.includes('Hiring: https://example.com/jobs'));
     assert.ok(result.includes('Policy: https://example.com/security-policy'));
@@ -92,36 +81,20 @@ describe('buildSecurityTxt', () => {
     const result = buildSecurityTxt({
       contact: ['mailto:security@example.com', 'tel:+1-555-0100'],
       expires: '2025-12-31T23:59:59Z',
-      acknowledgments: [
-        'https://example.com/hall-of-fame',
-        'https://example.com/thanks',
-      ],
+      acknowledgments: ['https://example.com/hall-of-fame', 'https://example.com/thanks'],
       canonical: [
         'https://example.com/.well-known/security.txt',
         'https://www.example.com/.well-known/security.txt',
       ],
-      encryption: [
-        'https://example.com/pgp-key.txt',
-        'openpgp4fpr:1234567890ABCDEF',
-      ],
+      encryption: ['https://example.com/pgp-key.txt', 'openpgp4fpr:1234567890ABCDEF'],
     });
 
     assert.ok(result.includes('Contact: mailto:security@example.com'));
     assert.ok(result.includes('Contact: tel:+1-555-0100'));
-    assert.ok(
-      result.includes('Acknowledgments: https://example.com/hall-of-fame'),
-    );
+    assert.ok(result.includes('Acknowledgments: https://example.com/hall-of-fame'));
     assert.ok(result.includes('Acknowledgments: https://example.com/thanks'));
-    assert.ok(
-      result.includes(
-        'Canonical: https://example.com/.well-known/security.txt',
-      ),
-    );
-    assert.ok(
-      result.includes(
-        'Canonical: https://www.example.com/.well-known/security.txt',
-      ),
-    );
+    assert.ok(result.includes('Canonical: https://example.com/.well-known/security.txt'));
+    assert.ok(result.includes('Canonical: https://www.example.com/.well-known/security.txt'));
     assert.ok(result.includes('Encryption: https://example.com/pgp-key.txt'));
     assert.ok(result.includes('Encryption: openpgp4fpr:1234567890ABCDEF'));
   });
@@ -154,9 +127,7 @@ describe('buildSecurityTxt', () => {
       policy: 'https://example.com/policy',
     });
 
-    const lines = result
-      .split('\n')
-      .filter((line) => line && !line.startsWith('#'));
+    const lines = result.split('\n').filter((line) => line && !line.startsWith('#'));
 
     // Canonical should come first (if present)
     assert.ok(lines[0].match(/^Canonical:/));
@@ -207,10 +178,7 @@ describe('parseSecurityConfig', () => {
     });
 
     assert.strictEqual(config.acknowledgments, 'https://example.com/thanks');
-    assert.strictEqual(
-      config.canonical,
-      'https://example.com/.well-known/security.txt',
-    );
+    assert.strictEqual(config.canonical, 'https://example.com/.well-known/security.txt');
     assert.strictEqual(config.encryption, 'https://example.com/pgp-key.txt');
     assert.strictEqual(config.hiring, 'https://example.com/jobs');
     assert.strictEqual(config.policy, 'https://example.com/policy');
@@ -222,15 +190,11 @@ describe('parseSecurityConfig', () => {
     const config = parseSecurityConfig({
       contact: 'mailto:sec1@example.com, mailto:sec2@example.com',
       expires: '2025-12-31T23:59:59Z',
-      acknowledgments:
-        'https://example.com/thanks1, https://example.com/thanks2',
+      acknowledgments: 'https://example.com/thanks1, https://example.com/thanks2',
       encryption: 'https://example.com/key1.txt, https://example.com/key2.txt',
     });
 
-    assert.deepStrictEqual(config.contact, [
-      'mailto:sec1@example.com',
-      'mailto:sec2@example.com',
-    ]);
+    assert.deepStrictEqual(config.contact, ['mailto:sec1@example.com', 'mailto:sec2@example.com']);
     assert.deepStrictEqual(config.acknowledgments, [
       'https://example.com/thanks1',
       'https://example.com/thanks2',
@@ -253,8 +217,7 @@ describe('parseSecurityConfig', () => {
   it('should trim whitespace from comma-separated values', () => {
     const config = parseSecurityConfig({
       contact: ' mailto:security@example.com , https://example.com/security ',
-      acknowledgments:
-        ' https://example.com/thanks , https://example.com/more ',
+      acknowledgments: ' https://example.com/thanks , https://example.com/more ',
       canonical:
         ' https://example.com/.well-known/security.txt , https://www.example.com/.well-known/security.txt ',
       expires: '2025-12-31T23:59:59Z',

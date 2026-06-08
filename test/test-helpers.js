@@ -42,15 +42,12 @@ function setupActionEnvironment(eventJsonPath) {
   Object.entries(inputs).forEach(([k, v]) => setActionInput(k, v));
 
   // Sensible defaults for security.txt generation
-  if (!inputs.security_contact)
-    setActionInput('security_contact', 'security@example.com');
-  if (!inputs.security_expires)
-    setActionInput('security_expires', '2026-12-31T23:59:59Z');
+  if (!inputs.security_contact) setActionInput('security_contact', 'security@example.com');
+  if (!inputs.security_expires) setActionInput('security_expires', '2026-12-31T23:59:59Z');
   if (!inputs.public_dir) setActionInput('public_dir', '.well-known');
   if (!inputs.upload_artifacts) setActionInput('upload_artifacts', 'true');
   if (!inputs.artifact_name) setActionInput('artifact_name', 'securitytxt');
-  if (!inputs.artifact_retention_days)
-    setActionInput('artifact_retention_days', '30');
+  if (!inputs.artifact_retention_days) setActionInput('artifact_retention_days', '30');
 
   return inputs;
 }
@@ -61,9 +58,7 @@ function setupActionEnvironment(eventJsonPath) {
 function runActionLocally(distPath = 'dist/index.js') {
   const fullPath = path.resolve(distPath);
   if (!fs.existsSync(fullPath)) {
-    throw new Error(
-      `Action entry point not found: ${fullPath}. Run 'npm run build' first.`,
-    );
+    throw new Error(`Action entry point not found: ${fullPath}. Run 'npm run build' first.`);
   }
 
   delete require.cache[require.resolve(fullPath)];

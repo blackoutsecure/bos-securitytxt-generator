@@ -91,9 +91,7 @@ function release(versionType = null) {
   console.log();
 
   console.log('4) Committing changes...');
-  exec(
-    'git add package.json package-lock.json src/lib/project-config.js dist/',
-  );
+  exec('git add package.json package-lock.json src/lib/project-config.js dist/');
   exec(`git commit -m "chore: release v${version}"`);
   console.log();
 

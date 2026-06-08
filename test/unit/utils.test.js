@@ -9,11 +9,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const {
-  formatFileSize,
-  findPublicDir,
-  inferSiteUrl,
-} = require('../../src/lib/utils');
+const { formatFileSize, findPublicDir, inferSiteUrl } = require('../../src/lib/utils');
 
 describe('Utils', function () {
   describe('formatFileSize', function () {
@@ -62,30 +58,21 @@ describe('Utils', function () {
 
     it('should find dist directory', function () {
       fs.mkdirSync(path.join(tempDir, 'dist'));
-      fs.writeFileSync(
-        path.join(tempDir, 'dist', 'index.html'),
-        '<html></html>',
-      );
+      fs.writeFileSync(path.join(tempDir, 'dist', 'index.html'), '<html></html>');
       const result = findPublicDir();
       assert.strictEqual(result, 'dist');
     });
 
     it('should find build directory', function () {
       fs.mkdirSync(path.join(tempDir, 'build'));
-      fs.writeFileSync(
-        path.join(tempDir, 'build', 'index.html'),
-        '<html></html>',
-      );
+      fs.writeFileSync(path.join(tempDir, 'build', 'index.html'), '<html></html>');
       const result = findPublicDir();
       assert.strictEqual(result, 'build');
     });
 
     it('should find public directory', function () {
       fs.mkdirSync(path.join(tempDir, 'public'));
-      fs.writeFileSync(
-        path.join(tempDir, 'public', 'index.html'),
-        '<html></html>',
-      );
+      fs.writeFileSync(path.join(tempDir, 'public', 'index.html'), '<html></html>');
       const result = findPublicDir();
       assert.strictEqual(result, 'public');
     });
@@ -93,14 +80,8 @@ describe('Utils', function () {
     it('should prefer directory with index.html', function () {
       fs.mkdirSync(path.join(tempDir, 'dist'));
       fs.mkdirSync(path.join(tempDir, 'build'));
-      fs.writeFileSync(
-        path.join(tempDir, 'dist', 'page.html'),
-        '<html></html>',
-      );
-      fs.writeFileSync(
-        path.join(tempDir, 'build', 'index.html'),
-        '<html></html>',
-      );
+      fs.writeFileSync(path.join(tempDir, 'dist', 'page.html'), '<html></html>');
+      fs.writeFileSync(path.join(tempDir, 'build', 'index.html'), '<html></html>');
       const result = findPublicDir();
       assert.strictEqual(result, 'build');
     });
@@ -108,22 +89,10 @@ describe('Utils', function () {
     it('should prefer directory with more HTML files', function () {
       fs.mkdirSync(path.join(tempDir, 'dist'));
       fs.mkdirSync(path.join(tempDir, 'build'));
-      fs.writeFileSync(
-        path.join(tempDir, 'dist', 'page1.html'),
-        '<html></html>',
-      );
-      fs.writeFileSync(
-        path.join(tempDir, 'dist', 'page2.html'),
-        '<html></html>',
-      );
-      fs.writeFileSync(
-        path.join(tempDir, 'dist', 'page3.html'),
-        '<html></html>',
-      );
-      fs.writeFileSync(
-        path.join(tempDir, 'build', 'page1.html'),
-        '<html></html>',
-      );
+      fs.writeFileSync(path.join(tempDir, 'dist', 'page1.html'), '<html></html>');
+      fs.writeFileSync(path.join(tempDir, 'dist', 'page2.html'), '<html></html>');
+      fs.writeFileSync(path.join(tempDir, 'dist', 'page3.html'), '<html></html>');
+      fs.writeFileSync(path.join(tempDir, 'build', 'page1.html'), '<html></html>');
       const result = findPublicDir();
       assert.strictEqual(result, 'dist');
     });
@@ -131,14 +100,8 @@ describe('Utils', function () {
     it('should use candidate input if provided and exists', function () {
       fs.mkdirSync(path.join(tempDir, 'custom'));
       fs.mkdirSync(path.join(tempDir, 'dist'));
-      fs.writeFileSync(
-        path.join(tempDir, 'custom', 'index.html'),
-        '<html></html>',
-      );
-      fs.writeFileSync(
-        path.join(tempDir, 'dist', 'index.html'),
-        '<html></html>',
-      );
+      fs.writeFileSync(path.join(tempDir, 'custom', 'index.html'), '<html></html>');
+      fs.writeFileSync(path.join(tempDir, 'dist', 'index.html'), '<html></html>');
       const result = findPublicDir('custom');
       assert.strictEqual(result, 'custom');
     });

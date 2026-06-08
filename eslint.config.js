@@ -39,15 +39,8 @@ module.exports = [
     },
     rules: {
       semi: ['error', 'always'],
-      quotes: [
-        'error',
-        'single',
-        { avoidEscape: true, allowTemplateLiterals: true },
-      ],
-      'no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
+      quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-console': 'off',
       'no-empty': 'warn',
       'prefer-const': 'error',
