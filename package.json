@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@actions/artifact": "^2.1.2",
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^3.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
