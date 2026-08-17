@@ -136,7 +136,15 @@ describe('Action entrypoint', () => {
         logs.some((line) => line.includes('Security.txt generation completed')),
         'footer logged',
       );
-      assert.strictEqual(warnings.length, 0);
+      assert.ok(
+        logs.some((line) => line.includes('RFC 9116 Audit')),
+        'audit section logged',
+      );
+      // The audit annotates `warn` findings, so only hard failures are fatal.
+      assert.deepStrictEqual(
+        warnings.filter((line) => line.startsWith('failed:')),
+        [],
+      );
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

@@ -5,6 +5,9 @@
   "description": "Generate RFC 9116-compliant security.txt for responsible vulnerability disclosure. Automated deployment with GitHub Actions.",
   "author": "Blackout Secure <https://github.com/blackoutsecure>",
   "main": "dist/index.js",
+  "bin": {
+    "bos-securitytxt": "src/cli.js"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -24,6 +27,7 @@
   ],
   "scripts": {
     "build": "ncc build src/index.js -o dist",
+    "cli": "node src/cli.js",
     "prebuild": "npm run validate",
     "prepare": "npm run build",
     "lint": "eslint . --fix",
@@ -47,7 +51,8 @@
   },
   "dependencies": {
     "@actions/artifact": "^2.1.2",
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^1.11.1",
+    "js-yaml": "^4.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

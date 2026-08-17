@@ -260,7 +260,80 @@ function parseSecurityConfig(inputs) {
   return config;
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Security.txt Reader
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Field names registered by RFC 9116 § 2.5, lowercased. */
+const REGISTERED_FIELDS = Object.freeze([
+  'acknowledgments',
+  'canonical',
+  'contact',
+  'encryption',
+  'expires',
+  'hiring',
+  'policy',
+  'preferred-languages',
+]);
+
+/** Fields that RFC 9116 § 2.4 permits at most once. */
+const SINGLE_VALUED_FIELDS = Object.freeze(['expires', 'preferred-languages']);
+
+/**
+ * Parse security.txt content into directives for auditing.
+ *
+ * Comment and blank lines are ignored. Values keep their original casing;
+ * field names are lowercased so lookups are case-insensitive per RFC 9116.
+ *
+ * @param {string} content - Raw security.txt content.
+ * @returns {object} `{ fields, unknownFields, malformedLines, signed, hasBom }`
+ */
+function parseSecurityTxt(content = '') {
+  const hasBom = content.charCodeAt(0) === 0xfeff;
+  const body = hasBom ? content.slice(1) : content;
+
+  const fields = {};
+  const unknownFields = [];
+  const malformedLines = [];
+
+  body.split(/\r?\n/).forEach((rawLine, index) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) return;
+    // Cleartext PGP framing is structural, not a directive.
+    if (line.startsWith('-----') || /^(Hash|Version):/i.test(line)) return;
+
+    const separator = line.indexOf(':');
+    if (separator <= 0) {
+      malformedLines.push({ line: index + 1, text: line });
+      return;
+    }
+
+    const name = line.slice(0, separator).trim().toLowerCase();
+    const value = line.slice(separator + 1).trim();
+    if (!/^[a-z0-9-]+$/.test(name)) {
+      malformedLines.push({ line: index + 1, text: line });
+      return;
+    }
+
+    (fields[name] ||= []).push(value);
+    if (!REGISTERED_FIELDS.includes(name) && !unknownFields.includes(name)) {
+      unknownFields.push(name);
+    }
+  });
+
+  return {
+    fields,
+    unknownFields,
+    malformedLines,
+    signed: body.includes('-----BEGIN PGP SIGNED MESSAGE-----'),
+    hasBom,
+  };
+}
+
 module.exports = {
   buildSecurityTxt,
   parseSecurityConfig,
+  parseSecurityTxt,
+  REGISTERED_FIELDS,
+  SINGLE_VALUED_FIELDS,
 };

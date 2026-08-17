@@ -1,0 +1,58 @@
+{
+  "security_txt": {
+    "generate": {
+      "include_comments": true,
+      "filename": "security.txt",
+      "write_root_fallback": false
+    },
+    "fields": {
+      "expires": "180d",
+      "contact": [],
+      "acknowledgments": [],
+      "canonical": [],
+      "encryption": [],
+      "hiring": [],
+      "policy": [],
+      "preferred_languages": ""
+    },
+    "audit": {
+      "enable": true,
+      "fail_on": "fail",
+      "max_size_kb": 32,
+      "expires_max_days": 365,
+      "rules": {
+        "require_contact": "warn",
+        "require_expires": "warn",
+        "expires_not_expired": "warn",
+        "expires_within_max_days": "warn",
+        "require_canonical": "warn",
+        "canonical_matches_site_url": "warn",
+        "require_https_uris": "warn",
+        "valid_contact_uri": "warn",
+        "require_multiple_contacts": "skip",
+        "valid_preferred_languages": "warn",
+        "single_valued_fields": "warn",
+        "forbid_unknown_fields": "warn",
+        "recommend_encryption": "skip",
+        "recommend_policy": "warn",
+        "recommend_acknowledgments": "skip",
+        "recommend_hiring": "skip",
+        "well_known_location": "warn",
+        "file_size_limit": "warn",
+        "require_signature": "skip",
+        "require_utf8_no_bom": "warn"
+      }
+    },
+    "reporting": {
+      "step_summary": true,
+      "sarif": true,
+      "json_report": true,
+      "recommendations": true
+    },
+    "remediation": {
+      "enable_ai_findings_summary": true,
+      "ai_findings_summary_provider": "auto",
+      "local_heuristic_fallback": true
+    }
+  }
+}
