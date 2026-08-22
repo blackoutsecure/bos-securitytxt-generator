@@ -6,7 +6,6 @@
 # ──────────────────────────────────────────────────────────────────────
 # Node.js / JavaScript
 # ──────────────────────────────────────────────────────────────────────
-node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -21,13 +20,11 @@ pnpm-lock.yaml
 # ──────────────────────────────────────────────────────────────────────
 # Keep dist/ committed for GitHub Actions
 # dist/
-build/
 public/
 
 # ──────────────────────────────────────────────────────────────────────
 # Environment & Secrets
 # ──────────────────────────────────────────────────────────────────────
-.env
 .env.local
 .env.*.local
 *.pem
@@ -37,10 +34,8 @@ public/
 # IDEs & Editors
 # ──────────────────────────────────────────────────────────────────────
 .vscode/
-.idea/
 *.sublime-project
 *.sublime-workspace
-*.swp
 *.swo
 *~
 .project
@@ -51,12 +46,10 @@ public/
 # ──────────────────────────────────────────────────────────────────────
 # OS-Generated Files
 # ──────────────────────────────────────────────────────────────────────
-.DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
@@ -76,7 +69,6 @@ lerna-debug.log*
 # ──────────────────────────────────────────────────────────────────────
 # Test Coverage & Reports
 # ──────────────────────────────────────────────────────────────────────
-coverage/
 .nyc_output/
 *.lcov
 test-results/
@@ -117,8 +109,6 @@ test-public/
 # ──────────────────────────────────────────────────────────────────────
 # Python (if used for tooling)
 # ──────────────────────────────────────────────────────────────────────
-__pycache__/
-*.py[cod]
 *.egg
 *.egg-info/
 
@@ -139,3 +129,37 @@ bin/act
 !event.json
 !test/event.json
 
+
+# >>> managed-file-sync:common >>>
+# OS + editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Build + dependency output
+node_modules/
+dist/
+build/
+coverage/
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local secrets (never commit these)
+.env
+.env.*
+!.env.example
+# <<< managed-file-sync:common <<<
+
+# >>> managed-file-sync:coverage_artifacts >>>
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+# <<< managed-file-sync:coverage_artifacts <<<
