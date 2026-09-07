@@ -82348,6 +82348,7 @@ function fromObject(doc, { sourcePath = '', sourcePaths = [], repoName = '' }) {
     fields: fieldsFromObject(readMapping(doc, 'fields')),
     audit: auditFromObject(readMapping(doc, 'audit')),
     reporting: reportingFromObject(readMapping(doc, 'reporting')),
+    redaction: redactionFromObject(readMapping(doc, 'redaction')),
     remediation: remediationFromObject(readMapping(doc, 'remediation')),
     sourcePath,
     sourcePaths: Object.freeze([...sourcePaths]),
@@ -82411,6 +82412,14 @@ function reportingFromObject(d) {
     sarif: readBool(d, 'sarif', true),
     jsonReport: readBool(d, 'json_report', true),
     recommendations: readBool(d, 'recommendations', true),
+  });
+}
+
+function redactionFromObject(d) {
+  return Object.freeze({
+    enabled: readBool(d, 'enabled', true),
+    placeholder: readString(d, 'placeholder', '***'),
+    extraPatterns: Object.freeze(readStringList(d, 'extra_patterns')),
   });
 }
 
@@ -83285,6 +83294,62 @@ module.exports = {
 
 /***/ }),
 
+/***/ 54000:
+/***/ ((module) => {
+
+// Blackout Secure Security TXT Generator
+// SPDX-License-Identifier: Apache-2.0
+// Redacts credential-shaped values only at reporting boundaries.
+
+const BUILTIN_PATTERNS = Object.freeze([
+  /\b(?:ghp|gho|ghs|ghr|ghu)_[A-Za-z0-9_]+\b/g,
+  /\bgithub_pat_[A-Za-z0-9_]+\b/g,
+  /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g,
+  /\bAIza[A-Za-z0-9_-]{30,}\b/g,
+  /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g,
+  /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,
+  /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g,
+  /(https?:\/\/[^/\s:@]+:)[^@\s]+(@)/gi,
+  /\b(Bearer|Basic)\s+[A-Za-z0-9+/_=-]{8,}/gi,
+  /(\b(?:password|token|api_key|secret|private_key)\b\s*[:=]\s*)(["']?)[^\s,;}\]]+\2/gi,
+]);
+
+function patterns(extraPatterns = []) {
+  return [...BUILTIN_PATTERNS, ...extraPatterns.map((pattern) => new RegExp(pattern, 'g'))];
+}
+
+function redactSensitive(value, options = {}) {
+  if (typeof value !== 'string' || options.enabled === false) return value;
+  const placeholder = options.placeholder || '***';
+  return patterns(options.extraPatterns || []).reduce(
+    (result, pattern) =>
+      result.replace(pattern, (match) => {
+        if (/^https?:\/\//i.test(match)) return match.replace(/:[^@]+@/, `:${placeholder}@`);
+        if (/^(?:password|token|api_key|secret|private_key)\b/i.test(match)) {
+          return match.replace(/([:=]\s*).*/, `$1${placeholder}`);
+        }
+        if (/^(?:Bearer|Basic)\s/i.test(match)) return match.replace(/\s+.*/, ` ${placeholder}`);
+        return placeholder;
+      }),
+    value,
+  );
+}
+
+function redactObject(value, options = {}) {
+  if (Array.isArray(value)) return value.map((item) => redactObject(item, options));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, redactObject(item, options)]),
+    );
+  }
+  return redactSensitive(value, options);
+}
+
+module.exports = { redactSensitive, redactObject };
+
+
+/***/ }),
+
 /***/ 2279:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -83301,6 +83366,7 @@ const fs = __nccwpck_require__(79896);
 const path = __nccwpck_require__(16928);
 
 const { RULE_FAMILIES, familyFor, severityLabel } = __nccwpck_require__(85575);
+const { redactSensitive, redactObject } = __nccwpck_require__(54000);
 
 const SEVERITY_ICON = Object.freeze({
   pass: '✅',
@@ -83315,7 +83381,7 @@ const SEVERITY_ICON = Object.freeze({
  * @param {object} core - `@actions/core` module.
  * @param {object} result - An `AuditResult`.
  */
-function printAuditTable(core, result) {
+function printAuditTable(core, result, redaction = {}) {
   core.info('');
   core.info('🛡️  RFC 9116 Audit:');
 
@@ -83338,7 +83404,7 @@ function printAuditTable(core, result) {
     const icon = SEVERITY_ICON[finding.severity] || '•';
     core.info(
       `      ${icon} ${finding.ruleId.padEnd(idWidth)}  ` +
-        `${finding.severity.padEnd(sevWidth)}  ${finding.message}`,
+        `${finding.severity.padEnd(sevWidth)}  ${redactSensitive(finding.message, redaction)}`,
     );
   };
 
@@ -83377,9 +83443,9 @@ function printAuditTable(core, result) {
  * @param {object} result - An `AuditResult`.
  * @param {boolean} failRun - Whether `fail` findings should fail the job.
  */
-function annotate(core, result, failRun) {
+function annotate(core, result, failRun, redaction = {}) {
   for (const finding of result.findings) {
-    const text = `${finding.ruleId}: ${finding.message}`;
+    const text = `${finding.ruleId}: ${redactSensitive(finding.message, redaction)}`;
     if (finding.severity === 'fail' || finding.severity === 'error') {
       if (failRun) core.setFailed(text);
       else core.error(text);
@@ -83399,11 +83465,11 @@ function annotate(core, result, failRun) {
  * @returns {boolean} True when a summary was written.
  */
 function writeStepSummary(result, options = {}) {
-  const { aiSummary = '', aiProvider = '', environ = process.env } = options;
+  const { aiSummary = '', aiProvider = '', environ = process.env, redaction = {} } = options;
   const summaryPath = environ.GITHUB_STEP_SUMMARY;
   if (!summaryPath) return false;
 
-  let markdown = result.summaryMarkdown();
+  let markdown = redactSensitive(result.summaryMarkdown(), redaction);
   if (aiSummary) {
     markdown += [
       '',
@@ -83411,7 +83477,7 @@ function writeStepSummary(result, options = {}) {
       '',
       `_Source: ${aiProvider || 'local-heuristic'}_`,
       '',
-      aiSummary,
+      redactSensitive(aiSummary, redaction),
       '',
     ].join('\n');
   }
@@ -83431,8 +83497,8 @@ function writeStepSummary(result, options = {}) {
  * @param {object} [extra] - Extra top-level fields to merge in.
  * @returns {string} The path written.
  */
-function writeJsonReport(result, filePath, extra = {}) {
-  return writeJson(filePath, { ...result.toJSON(), ...extra });
+function writeJsonReport(result, filePath, extra = {}, redaction = {}) {
+  return writeJson(filePath, redactObject({ ...result.toJSON(), ...extra }, redaction));
 }
 
 /**
@@ -83441,8 +83507,8 @@ function writeJsonReport(result, filePath, extra = {}) {
  * @param {string} filePath - Destination path.
  * @returns {string} The path written.
  */
-function writeRecommendations(result, filePath) {
-  return writeJson(filePath, result.recommendations());
+function writeRecommendations(result, filePath, redaction = {}) {
+  return writeJson(filePath, redactObject(result.recommendations(), redaction));
 }
 
 /**
@@ -83452,15 +83518,18 @@ function writeRecommendations(result, filePath) {
  * @param {string} filePath - Destination path.
  * @returns {string} The path written.
  */
-function writeSkips(result, filePath) {
+function writeSkips(result, filePath, redaction = {}) {
   return writeJson(
     filePath,
-    result.skipped.map((f) => ({
-      rule_id: f.ruleId,
-      title: f.title,
-      message: f.message,
-      location: f.location,
-    })),
+    redactObject(
+      result.skipped.map((f) => ({
+        rule_id: f.ruleId,
+        title: f.title,
+        message: f.message,
+        location: f.location,
+      })),
+      redaction,
+    ),
   );
 }
 
@@ -83472,6 +83541,7 @@ function writeJson(filePath, payload) {
 
 module.exports = {
   SEVERITY_ICON,
+  redactSensitive,
   severityLabel,
   printAuditTable,
   annotate,
@@ -98691,6 +98761,24 @@ exports.StorageContextClient = StorageContextClient;
 
 /***/ }),
 
+/***/ 83627:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KnownEncryptionAlgorithmType = void 0;
+/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
+var KnownEncryptionAlgorithmType;
+(function (KnownEncryptionAlgorithmType) {
+    KnownEncryptionAlgorithmType["AES256"] = "AES256";
+})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
+//# sourceMappingURL=generatedModels.js.map
+
+/***/ }),
+
 /***/ 30247:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -109017,6 +109105,132 @@ exports.listType = {
 
 /***/ }),
 
+/***/ 56635:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=appendBlob.js.map
+
+/***/ }),
+
+/***/ 68355:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blob.js.map
+
+/***/ }),
+
+/***/ 17188:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blockBlob.js.map
+
+/***/ }),
+
+/***/ 15337:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=container.js.map
+
+/***/ }),
+
+/***/ 82354:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __nccwpck_require__(61860);
+tslib_1.__exportStar(__nccwpck_require__(26865), exports);
+tslib_1.__exportStar(__nccwpck_require__(15337), exports);
+tslib_1.__exportStar(__nccwpck_require__(68355), exports);
+tslib_1.__exportStar(__nccwpck_require__(14400), exports);
+tslib_1.__exportStar(__nccwpck_require__(56635), exports);
+tslib_1.__exportStar(__nccwpck_require__(17188), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 14400:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=pageBlob.js.map
+
+/***/ }),
+
+/***/ 26865:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=service.js.map
+
+/***/ }),
+
 /***/ 40535:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -112232,132 +112446,6 @@ const filterBlobsOperationSpec = {
 
 /***/ }),
 
-/***/ 56635:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=appendBlob.js.map
-
-/***/ }),
-
-/***/ 68355:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blob.js.map
-
-/***/ }),
-
-/***/ 17188:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blockBlob.js.map
-
-/***/ }),
-
-/***/ 15337:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=container.js.map
-
-/***/ }),
-
-/***/ 82354:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(61860);
-tslib_1.__exportStar(__nccwpck_require__(26865), exports);
-tslib_1.__exportStar(__nccwpck_require__(15337), exports);
-tslib_1.__exportStar(__nccwpck_require__(68355), exports);
-tslib_1.__exportStar(__nccwpck_require__(14400), exports);
-tslib_1.__exportStar(__nccwpck_require__(56635), exports);
-tslib_1.__exportStar(__nccwpck_require__(17188), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 14400:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=pageBlob.js.map
-
-/***/ }),
-
-/***/ 26865:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=service.js.map
-
-/***/ }),
-
 /***/ 5313:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -112428,24 +112516,6 @@ class StorageClient extends coreHttpCompat.ExtendedServiceClient {
 }
 exports.StorageClient = StorageClient;
 //# sourceMappingURL=storageClient.js.map
-
-/***/ }),
-
-/***/ 83627:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KnownEncryptionAlgorithmType = void 0;
-/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
-var KnownEncryptionAlgorithmType;
-(function (KnownEncryptionAlgorithmType) {
-    KnownEncryptionAlgorithmType["AES256"] = "AES256";
-})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
-//# sourceMappingURL=generatedModels.js.map
 
 /***/ }),
 
@@ -134002,7 +134072,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"bos-securitytxt-generator","v
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"security_txt":{"generate":{"include_comments":true,"filename":"security.txt","write_root_fallback":false},"fields":{"expires":"180d","contact":[],"acknowledgments":[],"canonical":[],"encryption":[],"hiring":[],"policy":[],"preferred_languages":""},"audit":{"enable":true,"fail_on":"fail","max_size_kb":32,"expires_max_days":365,"rules":{"require_contact":"warn","require_expires":"warn","expires_not_expired":"warn","expires_within_max_days":"warn","require_canonical":"warn","canonical_matches_site_url":"warn","require_https_uris":"warn","valid_contact_uri":"warn","require_multiple_contacts":"skip","valid_preferred_languages":"warn","single_valued_fields":"warn","forbid_unknown_fields":"warn","recommend_encryption":"skip","recommend_policy":"warn","recommend_acknowledgments":"skip","recommend_hiring":"skip","well_known_location":"warn","file_size_limit":"warn","require_signature":"skip","require_utf8_no_bom":"warn"}},"reporting":{"step_summary":true,"sarif":true,"json_report":true,"recommendations":true},"remediation":{"enable_ai_findings_summary":true,"ai_findings_summary_provider":"auto","local_heuristic_fallback":true}}}');
+module.exports = /*#__PURE__*/JSON.parse('{"security_txt":{"generate":{"include_comments":true,"filename":"security.txt","write_root_fallback":false},"fields":{"expires":"180d","contact":[],"acknowledgments":[],"canonical":[],"encryption":[],"hiring":[],"policy":[],"preferred_languages":""},"audit":{"enable":true,"fail_on":"fail","max_size_kb":32,"expires_max_days":365,"rules":{"require_contact":"warn","require_expires":"warn","expires_not_expired":"warn","expires_within_max_days":"warn","require_canonical":"warn","canonical_matches_site_url":"warn","require_https_uris":"warn","valid_contact_uri":"warn","require_multiple_contacts":"skip","valid_preferred_languages":"warn","single_valued_fields":"warn","forbid_unknown_fields":"warn","recommend_encryption":"skip","recommend_policy":"warn","recommend_acknowledgments":"skip","recommend_hiring":"skip","well_known_location":"warn","file_size_limit":"warn","require_signature":"skip","require_utf8_no_bom":"warn"}},"reporting":{"step_summary":true,"sarif":true,"json_report":true,"recommendations":true},"redaction":{"enabled":true,"placeholder":"***","extra_patterns":[]},"remediation":{"enable_ai_findings_summary":true,"ai_findings_summary_provider":"auto","local_heuristic_fallback":true}}}');
 
 /***/ })
 
@@ -134236,6 +134306,11 @@ async function run() {
     }
 
     const pkg = packageMetadata();
+    const redaction = {
+      enabled: boolInput('redact_sensitive', cfg.redaction.enabled),
+      placeholder: core.getInput('redaction_placeholder') || cfg.redaction.placeholder,
+      extraPatterns: cfg.redaction.extraPatterns,
+    };
     core.info(`⚙️  ${pkg.name} v${pkg.version}`);
     core.info('   Config cascade:');
     for (const source of cfg.sourcePaths) {
@@ -134429,7 +134504,7 @@ async function run() {
         publicDir: outputDir,
       });
 
-      reportMod.printAuditTable(core, auditResult);
+      reportMod.printAuditTable(core, auditResult, redaction);
 
       const failOnInput = (core.getInput('audit_fail_on') || '').trim();
       const failOn = cfgMod.FAIL_ON_LEVELS.includes(failOnInput) ? failOnInput : cfg.audit.failOn;
@@ -134439,7 +134514,7 @@ async function run() {
         );
       }
       const failRun = auditMod.shouldFail(auditResult, failOn);
-      reportMod.annotate(core, auditResult, failRun);
+      reportMod.annotate(core, auditResult, failRun, redaction);
 
       const remediation = {
         ...cfg.remediation,
@@ -134455,7 +134530,7 @@ async function run() {
         core.info('');
         core.info(`🤖 Findings summary (${summary.provider}):`);
         for (const line of summary.text.split('\n')) {
-          core.info(`   ${line}`);
+          core.info(`   ${reportMod.redactSensitive(line, redaction)}`);
         }
       }
 
@@ -134478,12 +134553,17 @@ async function run() {
       const reportPath = core.getInput('report_json') || '';
       if (cfg.reporting.jsonReport && reportPath) {
         try {
-          reportMod.writeJsonReport(auditResult, reportPath, {
-            ai_summary: summary.text,
-            ai_provider: summary.provider,
-            config_sources: [...cfg.sourcePaths],
-            package: pkg,
-          });
+          reportMod.writeJsonReport(
+            auditResult,
+            reportPath,
+            {
+              ai_summary: reportMod.redactSensitive(summary.text, redaction),
+              ai_provider: summary.provider,
+              config_sources: [...cfg.sourcePaths],
+              package: pkg,
+            },
+            redaction,
+          );
           core.info(`   ✓ JSON report written: ${reportPath}`);
           core.setOutput('report_json_path', reportPath);
         } catch (err) {
@@ -134494,7 +134574,7 @@ async function run() {
       const recommendationsPath = core.getInput('recommendations_json') || '';
       if (cfg.reporting.recommendations && recommendationsPath) {
         try {
-          reportMod.writeRecommendations(auditResult, recommendationsPath);
+          reportMod.writeRecommendations(auditResult, recommendationsPath, redaction);
           core.info(`   ✓ Recommendations written: ${recommendationsPath}`);
           core.setOutput('recommendations_json_path', recommendationsPath);
         } catch (err) {
@@ -134505,7 +134585,7 @@ async function run() {
       const skipsPath = core.getInput('skips_json') || '';
       if (skipsPath) {
         try {
-          reportMod.writeSkips(auditResult, skipsPath);
+          reportMod.writeSkips(auditResult, skipsPath, redaction);
           core.info(`   ✓ Skips written: ${skipsPath}`);
         } catch (err) {
           core.warning(`   ⚠️  Failed to write skips: ${err.message}`);
@@ -134516,6 +134596,7 @@ async function run() {
         reportMod.writeStepSummary(auditResult, {
           aiSummary: summary.text,
           aiProvider: summary.provider,
+          redaction,
         });
       }
 
@@ -134526,7 +134607,7 @@ async function run() {
       core.setOutput('audit_fail_count', String(totals.fail));
       core.setOutput('audit_error_count', String(totals.error));
       core.setOutput('audit_skip_count', String(totals.skip));
-      core.setOutput('ai_summary', summary.text);
+      core.setOutput('ai_summary', reportMod.redactSensitive(summary.text, redaction));
     } else {
       core.info('');
       core.info('🛡️  RFC 9116 Audit: Disabled');

@@ -137,7 +137,6 @@ function cmdVersion() {
 function cmdValidate(flags) {
   const pkg = metadataMod.packageMetadata();
   const cfg = resolveConfig(flags);
-
   const out = [
     'Package metadata:',
     `  name:        ${pkg.name}`,
@@ -222,6 +221,7 @@ function cmdGenerate(flags, repeated) {
 async function cmdAudit(flags) {
   const root = path.resolve(flags.root || '.');
   const cfg = resolveConfig(flags);
+  const redaction = cfg.redaction;
 
   const publicDir = path.resolve(root, flags.publicDir || 'dist');
   const filePath = flags.file
@@ -241,13 +241,15 @@ async function cmdAudit(flags) {
     publicDir,
   });
 
-  reportMod.printAuditTable(consoleCore(), result);
+  reportMod.printAuditTable(consoleCore(), result, redaction);
 
   const summary = flags.noAi
     ? { text: aiMod.localSummary(result), provider: 'local-heuristic' }
     : await aiMod.buildSummary(result, cfg.remediation);
   if (summary.text) {
-    process.stdout.write(`\nFindings summary (${summary.provider}):\n${summary.text}\n`);
+    process.stdout.write(
+      `\nFindings summary (${summary.provider}):\n${reportMod.redactSensitive(summary.text, redaction)}\n`,
+    );
   }
 
   if (flags.sarif) {
@@ -258,23 +260,29 @@ async function cmdAudit(flags) {
     process.stderr.write(`wrote SARIF: ${flags.sarif}\n`);
   }
   if (flags.json) {
-    reportMod.writeJsonReport(result, flags.json, {
-      ai_summary: summary.text,
-      ai_provider: summary.provider,
-    });
+    reportMod.writeJsonReport(
+      result,
+      flags.json,
+      {
+        ai_summary: summary.text,
+        ai_provider: summary.provider,
+      },
+      redaction,
+    );
     process.stderr.write(`wrote JSON report: ${flags.json}\n`);
   }
   if (flags.recommendations) {
-    reportMod.writeRecommendations(result, flags.recommendations);
+    reportMod.writeRecommendations(result, flags.recommendations, redaction);
     process.stderr.write(`wrote recommendations: ${flags.recommendations}\n`);
   }
   if (flags.skips) {
-    reportMod.writeSkips(result, flags.skips);
+    reportMod.writeSkips(result, flags.skips, redaction);
     process.stderr.write(`wrote skips: ${flags.skips}\n`);
   }
   reportMod.writeStepSummary(result, {
     aiSummary: summary.text,
     aiProvider: summary.provider,
+    redaction,
   });
 
   const failOn = flags.failOn || cfg.audit.failOn;

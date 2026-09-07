@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { RULE_FAMILIES, familyFor, severityLabel } = require('./findings');
+const { redactSensitive, redactObject } = require('./redaction');
 
 const SEVERITY_ICON = Object.freeze({
   pass: '✅',
@@ -25,7 +26,7 @@ const SEVERITY_ICON = Object.freeze({
  * @param {object} core - `@actions/core` module.
  * @param {object} result - An `AuditResult`.
  */
-function printAuditTable(core, result) {
+function printAuditTable(core, result, redaction = {}) {
   core.info('');
   core.info('🛡️  RFC 9116 Audit:');
 
@@ -48,7 +49,7 @@ function printAuditTable(core, result) {
     const icon = SEVERITY_ICON[finding.severity] || '•';
     core.info(
       `      ${icon} ${finding.ruleId.padEnd(idWidth)}  ` +
-        `${finding.severity.padEnd(sevWidth)}  ${finding.message}`,
+        `${finding.severity.padEnd(sevWidth)}  ${redactSensitive(finding.message, redaction)}`,
     );
   };
 
@@ -87,9 +88,9 @@ function printAuditTable(core, result) {
  * @param {object} result - An `AuditResult`.
  * @param {boolean} failRun - Whether `fail` findings should fail the job.
  */
-function annotate(core, result, failRun) {
+function annotate(core, result, failRun, redaction = {}) {
   for (const finding of result.findings) {
-    const text = `${finding.ruleId}: ${finding.message}`;
+    const text = `${finding.ruleId}: ${redactSensitive(finding.message, redaction)}`;
     if (finding.severity === 'fail' || finding.severity === 'error') {
       if (failRun) core.setFailed(text);
       else core.error(text);
@@ -109,11 +110,11 @@ function annotate(core, result, failRun) {
  * @returns {boolean} True when a summary was written.
  */
 function writeStepSummary(result, options = {}) {
-  const { aiSummary = '', aiProvider = '', environ = process.env } = options;
+  const { aiSummary = '', aiProvider = '', environ = process.env, redaction = {} } = options;
   const summaryPath = environ.GITHUB_STEP_SUMMARY;
   if (!summaryPath) return false;
 
-  let markdown = result.summaryMarkdown();
+  let markdown = redactSensitive(result.summaryMarkdown(), redaction);
   if (aiSummary) {
     markdown += [
       '',
@@ -121,7 +122,7 @@ function writeStepSummary(result, options = {}) {
       '',
       `_Source: ${aiProvider || 'local-heuristic'}_`,
       '',
-      aiSummary,
+      redactSensitive(aiSummary, redaction),
       '',
     ].join('\n');
   }
@@ -141,8 +142,8 @@ function writeStepSummary(result, options = {}) {
  * @param {object} [extra] - Extra top-level fields to merge in.
  * @returns {string} The path written.
  */
-function writeJsonReport(result, filePath, extra = {}) {
-  return writeJson(filePath, { ...result.toJSON(), ...extra });
+function writeJsonReport(result, filePath, extra = {}, redaction = {}) {
+  return writeJson(filePath, redactObject({ ...result.toJSON(), ...extra }, redaction));
 }
 
 /**
@@ -151,8 +152,8 @@ function writeJsonReport(result, filePath, extra = {}) {
  * @param {string} filePath - Destination path.
  * @returns {string} The path written.
  */
-function writeRecommendations(result, filePath) {
-  return writeJson(filePath, result.recommendations());
+function writeRecommendations(result, filePath, redaction = {}) {
+  return writeJson(filePath, redactObject(result.recommendations(), redaction));
 }
 
 /**
@@ -162,15 +163,18 @@ function writeRecommendations(result, filePath) {
  * @param {string} filePath - Destination path.
  * @returns {string} The path written.
  */
-function writeSkips(result, filePath) {
+function writeSkips(result, filePath, redaction = {}) {
   return writeJson(
     filePath,
-    result.skipped.map((f) => ({
-      rule_id: f.ruleId,
-      title: f.title,
-      message: f.message,
-      location: f.location,
-    })),
+    redactObject(
+      result.skipped.map((f) => ({
+        rule_id: f.ruleId,
+        title: f.title,
+        message: f.message,
+        location: f.location,
+      })),
+      redaction,
+    ),
   );
 }
 
@@ -182,6 +186,7 @@ function writeJson(filePath, payload) {
 
 module.exports = {
   SEVERITY_ICON,
+  redactSensitive,
   severityLabel,
   printAuditTable,
   annotate,
